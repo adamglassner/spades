@@ -1,0 +1,7 @@
+dist/
+build/
+installer/Output/
+Output/
+rsrc_windows_amd64.syso
+mkres.tmp
+tools/bake/node_modules

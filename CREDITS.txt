@@ -1,0 +1,14 @@
+SPADES - A Brooklyn Rooftop Card Game  (v@VERSION@)
+====================================================
+
+Developed & Published by ... Ironite
+Game Design ................ Ironite
+Card Art & Illustration .... Ironite
+Music ...................... Ironite
+  "Fire Escape Beat", "Stoop Soul", "Bridge Lights"
+Sound Effects .............. Ironite
+Programming ................ Ironite
+Typefaces .................. Oswald, Pacifico & Rubik
+                             (SIL Open Font License, see OFL.txt)
+
+Copyright (c) 2026 Ironite. All rights reserved.

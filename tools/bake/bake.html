@@ -1,0 +1,110 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:"Rubik";src:url(../../assets/fonts/Rubik.ttf);font-weight:300 900}
+@font-face{font-family:"Rubik";font-style:italic;src:url(../../assets/fonts/Rubik-Italic.ttf);font-weight:300 900}
+@font-face{font-family:"Oswald";src:url(../../assets/fonts/Oswald.ttf);font-weight:200 700}
+@font-face{font-family:"Pacifico";src:url(../../assets/fonts/Pacifico.ttf)}
+body{margin:0;background:#222}</style></head><body>
+<!-- Bakes the canvas art (art.js), the store art and the WebAudio music and
+     sound (audio.js) into the files the Go game embeds. Run: node tools/bake/bake.mjs -->
+<script src="art.js"></script>
+<script src="audio.js"></script>
+<script>
+window.bake = {};
+(async () => {
+  for (const f of ['40px "Rubik"', 'italic 700 30px "Rubik"', '700 40px "Oswald"', '600 40px "Oswald"', '40px "Pacifico"']) await document.fonts.load(f);
+  const only = new URLSearchParams(location.search).get('only') || '';
+  /* ---------- images ---------- */
+  const img = {}, jpg = {};
+  for (const s of ['S', 'H', 'D', 'C']) for (let r = 2; r <= 14; r++) img['assets/cards/' + s + r] = Art.face({ s, r });
+  img['assets/cards/back'] = Art.back();
+  img['assets/soda'] = Art.soda(340);
+  img['assets/pizza'] = Art.pizza(380);
+  img['assets/lights'] = Art.lights(2400, 130);
+  for (const n of [16, 32, 48, 64, 256]) img['assets/icon-' + n] = Art.icon(n);
+  img['icon-1024'] = Art.icon(1024);
+  if (only !== 'cards') {
+    jpg['assets/deck'] = Art.deck(1600, 1000);
+    const card = id => Art.face({ s: id[0], r: +id.slice(1) });
+    function fan(c, cx, by, cardW, ids, spread) {
+      const n = ids.length, order = ids.map((x, i) => i).sort((a, b) => Math.abs(b - (n - 1) / 2) - Math.abs(a - (n - 1) / 2));
+      order.forEach(i => { const k = i - (n - 1) / 2; c.save(); c.translate(cx + k * cardW * .38, by); c.rotate(k * spread * Math.PI / 180); c.shadowColor = 'rgba(0,0,0,.5)'; c.shadowBlur = cardW * .12; c.shadowOffsetY = cardW * .05; const ch = cardW * Art.CH / Art.CW; c.drawImage(card(ids[i]), -cardW / 2, -ch, cardW, ch); c.restore(); });
+    }
+    function title(c, x, y, size, txt) { c.textAlign = 'center'; c.font = `${size}px "Pacifico"`; c.fillStyle = '#4a1a12'; c.fillText(txt, x, y + size * .05); c.fillStyle = '#b23a2a'; c.fillText(txt, x, y); }
+    function dusk(c, W, H, horizon) {
+      const g = c.createLinearGradient(0, 0, 0, horizon); g.addColorStop(0, '#0e1430'); g.addColorStop(0.55, '#3a2a52'); g.addColorStop(0.85, '#a8504a'); g.addColorStop(1, '#f2a060'); c.fillStyle = g; c.fillRect(0, 0, W, horizon);
+      let s = 7; const R = () => (s = (s * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < W * horizon / 7000; i++) { c.fillStyle = `rgba(255,250,230,${R() * 0.7})`; c.beginPath(); c.arc(R() * W, R() * horizon * 0.5, R() * 1.6, 0, 7); c.fill(); }
+    }
+    function parapet(c, W, y, h) { // a brick parapet with a stone coping
+      c.fillStyle = '#4a2a22'; c.fillRect(0, y, W, h);
+      for (let r = 0, yy = y + 10; yy < y + h; r++, yy += 24) for (let x = -(r % 2) * 32; x < W; x += 66) { c.fillStyle = ['#9a3a28', '#8a3222', '#a8442e', '#7e2e20'][(x / 66 + r * 3 & 3 + 4) % 4 | 0]; c.fillRect(x, yy, 62, 20); }
+      c.fillStyle = '#8a8078'; c.fillRect(0, y, W, 12); c.fillStyle = 'rgba(0,0,0,.3)'; c.fillRect(0, y + 12, W, 4);
+    }
+    const D = Art.deck(1200, 900), L = Art.lights(2400, 130);
+    { // store cover, 800x1000
+      const W = 800, H = 1000, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+      dusk(c, W, H, 640);
+      Art.skyline(c, -20, 640, 840, 260, '#1c1428', 'rgba(255,210,122,.85)', 17);
+      Art.bridge(c, 640, 600, 300, '#140e1c');
+      parapet(c, W, 610, 70);
+      c.drawImage(D, 0, 0, 1200, 900, -100, 680, 1000, 750); const v = c.createLinearGradient(0, 680, 0, 760); v.addColorStop(0, 'rgba(0,0,0,.6)'); v.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = v; c.fillRect(0, 680, W, 80);
+      c.drawImage(L, 0, 0, 2400, 130, 0, 10, 1600, 87);
+      c.fillStyle = 'rgba(255,250,242,.95)'; c.strokeStyle = '#2b2420'; c.lineWidth = 6; c.beginPath(); c.roundRect(80, 160, 640, 270, 18); c.fill(); c.stroke();
+      c.strokeStyle = '#c9a24c'; c.lineWidth = 2; c.beginPath(); c.roundRect(94, 174, 612, 242, 12); c.stroke();
+      c.fillStyle = '#7a6a5a'; c.font = '600 24px "Oswald"'; c.textAlign = 'center'; c.fillText('U P   O N   T H E   R O O F  ·  B R O O K L Y N', W / 2, 216);
+      title(c, W / 2, 318, 104, 'Spades'); c.fillStyle = '#4a3c34'; c.font = 'italic 600 30px "Rubik"'; c.fillText('A Brooklyn Rooftop Card Game', W / 2, 398);
+      c.drawImage(Art.soda(240), 20, 730, 240, 240); c.drawImage(Art.pizza(250), 560, 740, 250, 250);
+      fan(c, W / 2, H * 0.985, 230, ['S13', 'H14', 'S14', 'D14', 'S12'], 12);
+      jpg['store/cover'] = cv;
+    }
+    { // store hero, 2400x840
+      const W = 2400, H = 840, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+      dusk(c, W, H, 520);
+      Art.skyline(c, 0, 520, 2400, 300, '#1c1428', 'rgba(255,210,122,.85)', 29);
+      Art.bridge(c, 1950, 480, 360, '#140e1c');
+      parapet(c, W, 500, 60);
+      c.drawImage(D, 0, 0, 1200, 900, 0, 560, 2400, 1200);
+      const g = c.createLinearGradient(0, 0, W * .6, 0); g.addColorStop(0, 'rgba(10,6,16,.85)'); g.addColorStop(.7, 'rgba(10,6,16,.4)'); g.addColorStop(1, 'rgba(10,6,16,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      c.drawImage(L, 0, 0, 2400, 130, 0, 0, 2400, 130);
+      c.drawImage(Art.soda(320), 1180, 540, 320, 320); c.drawImage(Art.pizza(300), 2080, 560, 300, 300);
+      fan(c, W * 0.66, H * 1.06, 280, ['C14', 'S13', 'S14', 'H14', 'D11'], 11);
+      jpg['store/hero'] = cv;
+    }
+  }
+  bake.images = Object.fromEntries(Object.entries(img).map(([k, c]) => [k + '.png', c.toDataURL('image/png')]));
+  for (const [k, c] of Object.entries(jpg)) bake.images[k + '.jpg'] = c.toDataURL('image/jpeg', 0.9);
+  bake.images['store/icon.png'] = Art.icon(512).toDataURL('image/png');
+
+  /* ---------- audio, rendered offline ---------- */
+  const SR = 44100;
+  function wav(buf) {
+    const L = buf.getChannelData(0), Rr = buf.getChannelData(1);
+    let n = L.length; while (n > 1 && Math.abs(L[n - 1]) < 1e-4 && Math.abs(Rr[n - 1]) < 1e-4) n--;
+    const b = new DataView(new ArrayBuffer(44 + n * 4)), w = (o, s) => [...s].forEach((ch, i) => b.setUint8(o + i, ch.charCodeAt(0)));
+    w(0, 'RIFF'); b.setUint32(4, 36 + n * 4, true); w(8, 'WAVE'); w(12, 'fmt '); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 2, true);
+    b.setUint32(24, SR, true); b.setUint32(28, SR * 4, true); b.setUint16(32, 4, true); b.setUint16(34, 16, true); w(36, 'data'); b.setUint32(40, n * 4, true);
+    let peak = 0; for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(L[i]), Math.abs(Rr[i]));
+    const k = peak > 0.95 ? 0.95 / peak : 1;
+    for (let i = 0; i < n; i++) for (const [c, d] of [[0, L], [1, Rr]]) b.setInt16(44 + i * 4 + c * 2, Math.max(-1, Math.min(1, d[i] * k)) * 32767, true);
+    let s = ''; const u = new Uint8Array(b.buffer); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+    return { b64: btoa(s), peak };
+  }
+  bake.audio = {}; bake.peaks = {};
+  if (only !== 'cards') {
+    for (const [name, f] of Object.entries(Sound.fx)) {
+      const oc = new OfflineAudioContext(2, SR * 4, SR); const out = oc.createGain(); out.gain.value = 1.8; out.connect(oc.destination);
+      f(oc, out);
+      const r = wav(await oc.startRendering()); bake.audio['sfx-' + name] = r.b64; bake.peaks['sfx-' + name] = r.peak;
+    }
+    bake.tuneNames = Sound.TUNES.map(t => t.name);
+    for (let i = 0; i < Sound.TUNES.length; i++) {
+      const len = Sound.buildQueue(Sound.TUNES[i]).len;
+      const oc = new OfflineAudioContext(2, Math.ceil(SR * len), SR); const out = oc.createGain(); out.gain.value = 0.55; out.connect(oc.destination);
+      Sound.renderTune(oc, out, Sound.TUNES[i]);
+      const buf = await oc.startRendering(); buf.getChannelData(0)[buf.length - 1] = buf.getChannelData(1)[buf.length - 1] = 0.001;
+      const r = wav(buf); bake.audio['tune-' + i] = r.b64; bake.peaks['tune-' + i] = r.peak;
+    }
+  }
+  document.title = 'ready';
+})().catch(e => { document.title = 'error: ' + e.message + ' ' + e.stack; });
+</script></body></html>
